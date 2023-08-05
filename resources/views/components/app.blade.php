@@ -13,9 +13,12 @@
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+
+    {{-- Styles --}}
+    {{ $styles ?? '' }}
 </head>
 
-<body class="bg-">
+<body>
 
     {{-- Menu --}}
     <x-menu />
@@ -28,6 +31,8 @@
 
         {{ $slot }}
     </main>
+
+    {{ $script ?? '' }}
 </body>
 
 </html>

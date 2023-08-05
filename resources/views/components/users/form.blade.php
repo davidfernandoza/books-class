@@ -5,6 +5,12 @@
 
         <select id="role" type="number" name="role" class="form-control @error('role') is-invalid @enderror">
             @foreach ($roles as $role)
+                @if (isset($user))
+                    @if ($user->roles[0]->name == $role)
+                        <option value="{{ $role }}" selected>{{ $role }}</option>
+                        @continue
+                    @endif
+                @endif
                 <option value="{{ $role }}">{{ $role }}</option>
             @endforeach
         </select>

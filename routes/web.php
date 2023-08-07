@@ -36,9 +36,9 @@ Route::group(['middleware' => ['auth']], function () {
 	// Categories
 	Route::group(['prefix' => 'categories', 'middleware' => ['role:admin'], 'controller' => CategoryController::class], function () {
 		Route::get('/', 'index')->name('categories.index')->middleware('can:categories.index');
-		Route::get('/create', 'create')->name('categories.create')->middleware('can:categories.create');
+		Route::get('/get-all', 'getAll')->name('categories.get-all')->middleware('can:categories.get-all');
+		Route::get('/{category}', 'show')->name('categories.show')->middleware('can:categories.show');
 		Route::post('/', 'store')->name('categories.store')->middleware('can:categories.store');
-		Route::get('/{category}/edit', 'edit')->name('categories.edit')->middleware('can:categories.edit');
 		Route::put('/{category}', 'update')->name('categories.update')->middleware('can:categories.update');
 		Route::delete('/{category}', 'destroy')->name('categories.destroy')->middleware('can:categories.destroy');
 	});

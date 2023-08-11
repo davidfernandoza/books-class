@@ -4,7 +4,7 @@ export const handlerErrors = async error => {
 	console.error(error)
 	const status = error.response.status
 	let options = null
-	let errors_message = []
+	let error_object = {}
 
 	switch (status) {
 		case 422:
@@ -14,10 +14,9 @@ export const handlerErrors = async error => {
 					title: 'Error: Campos erroneos.',
 					text: 'Llena correctamente el formulario.'
 				}
-				if (Array.isArray(error.response.data.errors)) {
-					errors_message = error.response.data.errors
-				} else {
-					errors_message.push(error.response.data.errors)
+				const errors = error.response.data.errors
+				for (let prop in errors) {
+					error_object[prop] = errors[prop][0]
 				}
 			}
 			break
@@ -44,7 +43,7 @@ export const handlerErrors = async error => {
 			break
 	}
 	await Swal.fire(options)
-	return errors_message
+	return error_object
 }
 
 export const successMessage = async (is_delete = false, reload = false) => {

@@ -7,44 +7,92 @@
 					<h5 class="modal-title">{{ is_create ? 'Crear' : 'Editar' }} libro</h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
-				<div class="modal-body">
-					<section class="row">
-						<div class="col-12">
-							<label for="title">Titulo</label>
-							<input type="text" v-model="book.title" class="form-control" id="title">
-						</div>
-						<div class="col-12 mt-2">
-							<label for="stock">Cantidad</label>
-							<input type="number" v-model="book.stock" class="form-control" id="stock">
-						</div>
-						<div class="col-12 mt-2">
-							<label for="description">Descripcion</label>
-							<textarea v-model="book.description" class="form-control" id="description" rows="3"></textarea>
-						</div>
-						<div class="col-12 mt-2">
-							<label for="author">Autor</label>
-							<v-select id="author" :options="authors_data" v-model="author" :reduce="author => author.id" label="name"
-								:clearable="false" placeholder="Selecciona autor">
-								<template #search="{ attributes, events }">
-									<input class="vs__search" :required="!author" v-bind="attributes" v-on="events">
-								</template>
-							</v-select>
-						</div>
-						<div class="col-12 mt-2">
-							<label for="category">Categoria</label>
-							<v-select id="category" :options="categories_data" v-model="category" :reduce="category => category.id"
-								label="name" :clearable="false" placeholder="Selecciona categoria">
-								<template #search="{ attributes, events }">
-									<input class="vs__search" :required="!category" v-bind="attributes" v-on="events">
-								</template>
-							</v-select>
-						</div>
-					</section>
-				</div>
-				<div class="modal-footer mt-3">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-					<button type="button" class="btn btn-primary" @click="saveBook">Almacenar</button>
-				</div>
+
+				<!-- Backend error -->
+				<BackendError :errors="back_errors" />
+
+				<Form @submit="saveBook" :validation-schema="schema" ref="form">
+					<div class="modal-body">
+						<section class="row">
+
+							<!-- Title -->
+							<div class="col-12">
+								<label for="title">Titulo</label>
+								<Field name="title" v-slot="{ errorMessage, field }" v-model="book.title">
+									<input type="text" id="title" v-model="book.title"
+										:class="`form-control ${errorMessage || back_errors['title'] ? 'is-invalid' : ''}`" v-bind="field">
+									<span class="invalid-feedback">{{ errorMessage }}</span>
+									<span class="invalid-feedback" v-if="back_errors['title']">
+										{{ back_errors['title'] }}
+									</span>
+								</Field>
+							</div>
+
+							<!-- Stock -->
+							<div class="col-12 mt-2">
+								<Field name="stock" v-slot="{ errorMessage, field }" v-model="book.stock">
+									<label for="stock">Cantidad</label>
+									<input type="number" id="stock" v-model="book.stock"
+										:class="`form-control ${errorMessage || back_errors['stock'] ? 'is-invalid' : ''}`" v-bind="field">
+									<span class="invalid-feedback">{{ errorMessage }}</span>
+									<span class="invalid-feedback" v-if="back_errors['stock']">
+										{{ back_errors['stock'] }}
+									</span>
+								</Field>
+							</div>
+
+							<!-- Description -->
+							<div class="col-12 mt-2">
+								<Field name="description" v-slot="{ errorMessage, field }" v-model="book.description">
+									<label for="description">Descripcion</label>
+									<textarea v-model="book.description"
+										:class="`form-control ${errorMessage || back_errors['description'] ? 'is-invalid' : ''}`"
+										id="description" rows="3" v-bind="field"></textarea>
+									<span class="invalid-feedback">{{ errorMessage }}</span>
+									<span class="invalid-feedback" v-if="back_errors['description']">
+										{{ back_errors['description'] }}
+									</span>
+								</Field>
+							</div>
+
+							<!-- Author -->
+							<div class="col-12 mt-2">
+								<Field name="author" v-slot="{ errorMessage, field }" v-model="author">
+									<label for="author">Autor</label>
+									<v-select :options="authors_data" label="name" v-model="author" :reduce="author => author.id"
+										v-bind="field" placeholder="Seleccione autor" :clearable="false"
+										:class="`${errorMessage || back_errors['author_id'] ? 'is-invalid' : ''}`">
+									</v-select>
+									<span class="invalid-feedback">{{ errorMessage }}</span>
+									<span class="invalid-feedback" v-if="back_errors['author_id']">
+										{{ back_errors['author_id'] }}
+									</span>
+								</Field>
+							</div>
+
+							<!-- Category -->
+							<div class="col-12 mt-2">
+								<Field name="category" v-slot="{ errorMessage, field, valid }" v-model="category">
+									<label for="category">Categoria</label>
+									<v-select id="category" :options="categories_data" v-model="category" :reduce="category => category.id"
+										v-bind="field" label="name" placeholder="Selecciona categoria" :clearable="false"
+										:class="`${errorMessage || back_errors['category_id'] ? 'is-invalid' : ''}`">
+									</v-select>
+									<span class="invalid-feedback" v-if="!valid">{{ errorMessage }}</span>
+									<span class="invalid-feedback" v-if="back_errors['category_id']">
+										{{ back_errors['category_id'] }}
+									</span>
+								</Field>
+							</div>
+						</section>
+					</div>
+
+					<!-- Buttons -->
+					<div class="modal-footer mt-3">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+						<button type="submit" class="btn btn-primary">Almacenar</button>
+					</div>
+				</Form>
 			</div>
 		</div>
 	</div>
@@ -52,8 +100,14 @@
 
 <script>
 import { handlerErrors, successMessage } from '@/helpers/Alerts.js'
+import { Field, ErrorMessage, Form } from 'vee-validate'
+import * as yup from 'yup';
+
 export default {
 	props: ['book_data', 'authors_data', 'categories_data'],
+	components: {
+		Field, ErrorMessage, Form
+	},
 	watch: {
 		book_data(new_value) {
 			this.book = new_value
@@ -62,24 +116,37 @@ export default {
 			this.category = this.book.category_id
 		}
 	},
+	computed: {
+		schema() {
+			return yup.object({
+				// title: yup.string().required(),
+				stock: yup.number().required().positive().integer(),
+				description: yup.string(),
+				author: yup.string().required(),
+				category: yup.string().required()
+			});
+		}
+	},
 	data() {
 		return {
 			book: {},
 			is_create: true,
 			author: null,
-			category: null
+			category: null,
+			back_errors: {}
 		}
 	},
 	methods: {
 		async saveBook() {
 			try {
-				this.book.author_id = this.author
-				this.book.category_id = this.category
+				this.book.author = this.author
+				this.book.category = this.category
 				if (this.is_create) await axios.post('/books', this.book)
 				else await axios.put(`/books/${this.book.id}`, this.book)
 				await successMessage(false, true)
 			} catch (error) {
-				await handlerErrors(error)
+				this.back_errors = await handlerErrors(error)
+				console.log(this.back_errors);
 			}
 		},
 
@@ -88,6 +155,8 @@ export default {
 			this.author = null
 			this.category = null
 			this.book = {}
+			this.back_errors = {}
+			setTimeout(() => this.$refs.form.resetForm(), 100);
 		}
 	}
 }

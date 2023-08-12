@@ -8,6 +8,7 @@
 				<table class="table table-bordered" id="book_table">
 					<thead>
 						<tr>
+							<th>Imagen</th>
 							<th>Titulo</th>
 							<th>Autor</th>
 							<th>Cantidad</th>
@@ -16,16 +17,23 @@
 					</thead>
 					<tbody>
 						<tr v-for="(book, index) in books" :key="index">
+							<td>
+								<div class="d-flex justify-content-center">
+									<img :src="book.file.route" alt="Imagen Libro" class="img-thumbnail" width="40" height="40">
+								</div>
+							</td>
 							<td>{{ book.title }}</td>
 							<td>{{ book.author.name }}</td>
 							<td>{{ book.stock }}</td>
-							<td class="d-flex justify-content-center">
-								<button @click="editBook(book)" class="btn btn-warning btn-sm" title="Editar">
-									<i class="fas fa-pencil-alt"></i>
-								</button>
-								<button @click="deleteBook(book)" class="btn btn-danger btn-sm ms-2" title="Eliminar">
-									<i class="fas fa-trash-alt"></i>
-								</button>
+							<td>
+								<div class="d-flex justify-content-center">
+									<button @click="editBook(book)" class="btn btn-warning btn-sm" title="Editar">
+										<i class="fas fa-pencil-alt"></i>
+									</button>
+									<button @click="deleteBook(book)" class="btn btn-danger btn-sm ms-2" title="Eliminar">
+										<i class="fas fa-trash-alt"></i>
+									</button>
+								</div>
 							</td>
 						</tr>
 					</tbody>
@@ -48,7 +56,7 @@ export default {
 		return {
 			modal: null,
 			load_modal: true,
-			book: null
+			book: {}
 		}
 	},
 	mounted() {
@@ -71,7 +79,7 @@ export default {
 			if (!await deleteMessage()) return
 			try {
 				await axios.delete(`/books/${id}`)
-				await successMessage(true, true)
+				await successMessage({ is_delete: true, reload: true })
 			} catch (error) {
 				await handlerErrors(error)
 			}

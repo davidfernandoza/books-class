@@ -49,7 +49,7 @@ export default {
 		onMounted(() => index());
 
 		const categories = ref(null)
-		const category = ref({ hola: 'hola' })
+		const category = ref(null)
 		const table = ref(null)
 		const { openModal, closeModal, load_modal } = HandlerModal()
 
@@ -90,7 +90,7 @@ export default {
 			if (!await deleteMessage()) return
 			try {
 				await axios.delete(`/categories/${id}`)
-				await successMessage(true, false)
+				await successMessage({ is_delete: true })
 				reloadState()
 			} catch (error) {
 				await handlerErrors(error)

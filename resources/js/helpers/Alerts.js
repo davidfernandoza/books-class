@@ -46,7 +46,7 @@ export const handlerErrors = async error => {
 	return error_object
 }
 
-export const successMessage = async (is_delete = false, reload = false) => {
+export const successMessage = async ({ is_delete = false, reload = false }) => {
 	await Swal.fire({
 		icon: 'success',
 		title: 'Felicidades!',
@@ -54,9 +54,7 @@ export const successMessage = async (is_delete = false, reload = false) => {
 			? 'Dato eliminado correctamente.'
 			: 'Dato almacenado correctamente.'
 	})
-	if (reload) {
-		window.location.reload()
-	}
+	if (reload) window.location.reload()
 }
 
 export const deleteMessage = async () => {

@@ -5,43 +5,70 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\Author;
 use App\Models\Category;
-use Illuminate\Http\Request;
-use App\Http\Requests\Book\BookRequest;
+use App\Http\Trait\UploadFiles;
+use Illuminate\Support\Facades\DB;
+use App\Http\Requests\Book\BookStoreRequest;
+use App\Http\Requests\Book\BookUpdateRequest;
 
 
 class BookController extends Controller
 {
+	use UploadFiles;
+
 	public function home()
 	{
-		$books = Book::get();
+		$books = Book::with('author', 'category', 'file')->get();
 		return view('index', compact('books'));
 	}
 
 	public function index()
 	{
-		$books = Book::with('author', 'category')->get();
+		$books = Book::with('author', 'category', 'file')->get();
 		$categories = Category::get();
 		$authors = Author::get();
 		return view('book.index', compact('books', 'categories', 'authors'));
 	}
 
-	public function store(BookRequest $request)
+	public function store(BookStoreRequest $request)
 	{
-		$book = new Book($request->all());
-		$book->save();
-		return response()->json([], 201);
+		try {
+			DB::beginTransaction();
+			$book = new Book($request->all());
+			$book->save();
+			$this->uploadFile($book, $request);
+			DB::commit();
+			return response()->json([], 201);
+		} catch (\Throwable $th) {
+			DB::rollback();
+			throw $th;
+		}
 	}
 
-
-	public function update(BookRequest $request, Book $book)
+	public function update(BookUpdateRequest $request, Book $book)
 	{
-		$book->update($request->all());
-		return response()->json([], 204);
+		try {
+			DB::beginTransaction();
+			$book->update($request->all());
+			$this->uploadFile($book, $request);
+			DB::commit();
+			return response()->json([], 204);
+		} catch (\Throwable $th) {
+			DB::rollback();
+			throw $th;
+		}
 	}
 
 	public function destroy(Book $book)
 	{
-		$book->delete();
-		return response()->json([], 204);
+		try {
+			DB::beginTransaction();
+			$this->deleteFile($book);
+			$book->delete();
+			DB::commit();
+			return response()->json([], 204);
+		} catch (\Throwable $th) {
+			DB::rollback();
+			throw $th;
+		}
 	}
 }

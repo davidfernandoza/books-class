@@ -43,19 +43,19 @@
                             @role('admin')
                                 {{-- User --}}
                                 <a class="dropdown-item" href="{{ route('users.index') }}">
-                                    Usuarios
+                                    Usuarios (Blade)
                                 </a>
                             @endrole
                             @role('admin|librarian')
                                 {{-- User --}}
                                 <a class="dropdown-item" href="{{ route('books.index') }}">
-                                    Libros
+                                    Libros (Vue 2)
                                 </a>
                             @endrole
                             @can('categories.index')
                                 {{-- User --}}
                                 <a class="dropdown-item" href="{{ route('categories.index') }}">
-                                    Categorias
+                                    Categorias (Vue 3)
                                 </a>
                             @endcan
 

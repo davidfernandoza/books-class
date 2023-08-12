@@ -1,5 +1,4 @@
 <template>
-	<!-- Modal -->
 	<div class="modal fade" id="category_modal" data-bs-backdrop="static" data-bs-keyboard="false">
 		<div class="modal-dialog">
 			<div class="modal-content">
@@ -8,27 +7,27 @@
 					<button type="button" class="btn-close" @click="closeModal" aria-label="Close">
 					</button>
 				</div>
-				
-				<Form @submit="saveCategory" :validation-schema="schema">
+
+				<!-- Backend Errors -->
+				<backend-error :errors="back_errors" />
+
+				<!-- Form -->
+				<Form @submit="saveCategory">
 					<div class="modal-body row">
+
+						<!-- Name -->
 						<div class="col-12">
 							<label for="name">Nombre</label>
-							<Field type="text" name="name" id="name" class="form-control" v-model="category.name" />
-							<ErrorMessage name="name" />
-						</div>
-						<div class="col-12 mt-3">
-							<label for="email">Email</label>
-							<Field type="text" name="email" id="email" class="form-control" />
-							<ErrorMessage name="email" />
-						</div>
-						<div class="col-12 mt-3">
-							<Field name="password" v-slot="{ field, valid, errorMessage }">
-								<label for="password">Password</label>
-								<textarea id="password" v-bind="field" rows="3" class="form-control"></textarea>
-								<span v-if="!valid">{{ errorMessage }}</span>
+							<Field name="name" v-model="category.name" v-slot="{ errorMessage, field }" :rules="name_rules">
+								<input :class="`form-control ${errorMessage || back_errors['name'] ? 'is-invalid' : ''}`" id="name"
+									v-bind="field" />
+								<span class="invalid-feedback">{{ errorMessage }}</span>
+								<span class="invalid-feedback">{{ back_errors['name'] }}</span>
 							</Field>
 						</div>
 					</div>
+
+					<!-- Buttons -->
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" @click="closeModal">Cancelar</button>
 						<button type="submit" class="btn btn-primary">Almacenar</button>
@@ -43,21 +42,19 @@
 <script>
 import { handlerErrors, successMessage } from '@/helpers/Alerts.js'
 import { ref, getCurrentInstance } from 'vue'
-import { Field, ErrorMessage, Form } from 'vee-validate'
+import { Field, Form } from 'vee-validate'
 import * as yup from 'yup';
-
+import BackendError from '../Components/BackendError.vue';
 
 export default {
 	props: ['category_data'],
-	components: { Field, ErrorMessage, Form },
+	components: { Field, Form, BackendError },
 	setup({ category_data }) {
 		const instance = getCurrentInstance();
 		const is_create = category_data ? ref(false) : ref(true)
 		const category = !is_create.value ? ref(category_data) : ref({})
-
-		const closeModal = () => {
-			instance.parent.ctx.closeModal()
-		}
+		const back_errors = ref({})
+		const closeModal = () => instance.parent.ctx.closeModal()
 
 		const saveCategory = async () => {
 			try {
@@ -66,10 +63,9 @@ export default {
 				} else {
 					await axios.put(`/categories/${category.value.id}`, category.value)
 				}
-				await successMessage()
-				succesRespose()
+				successMessage({ is_delete: false, reload: false }).then(() => succesRespose())
 			} catch (error) {
-				await handlerErrors(error)
+				back_errors.value = await handlerErrors(error)
 			}
 		}
 
@@ -78,17 +74,18 @@ export default {
 			closeModal()
 		}
 
+		// Validate
+		const name_rules = yup.string().required('El nombre es requerido')
 
-
-		// const nameRules = yup.string().required().min(8);
-
-		const schema = yup.object({
-			email: yup.string().required().email(),
-			name: yup.string().required(),
-			password: yup.string().required().min(8),
-		});
-
-		return { is_create, category, closeModal, saveCategory, schema }
+		// Retorno de data
+		return {
+			category,
+			is_create,
+			name_rules,
+			back_errors,
+			closeModal,
+			saveCategory,
+		}
 	}
 
 }

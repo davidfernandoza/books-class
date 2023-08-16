@@ -12,18 +12,7 @@
 							<th>Acciones</th>
 						</tr>
 					</thead>
-					<tbody>
-						<tr v-for="(category, index) in categories" :key="index">
-							<td>{{ category.name }}</td>
-							<td class="d-flex justify-content-center">
-								<button @click="editCategory(category)" class="btn btn-warning btn-sm" title="Editar">
-									<i class="fas fa-pencil-alt"></i>
-								</button>
-								<button @click="deleteCategory(category)" class="btn btn-danger btn-sm ms-2" title="Eliminar">
-									<i class="fas fa-trash-alt"></i>
-								</button>
-							</td>
-						</tr>
+					<tbody @click="handleAction">
 					</tbody>
 				</table>
 			</div>
@@ -45,33 +34,57 @@ export default {
 	* Setup se lanza en beforeCreated
 	*/
 	setup(/* props, context*/) {
-
-		onMounted(() => index());
-
 		const categories = ref(null)
 		const category = ref(null)
 		const table = ref(null)
 		const { openModal, closeModal, load_modal } = HandlerModal()
 
-		const index = async () => {
-			await getCategories()
-			mountedTable()
+		onMounted(() => index());
+		const index = () => mountedTable()
+
+		const mountedTable = () => {
+			table.value = $('#category_table').DataTable({
+				destroy: true,
+				processing: true,
+				serverSide: true,
+				scrollX: true,
+				order: [[0, 'asc']],
+				autoWidth: false,
+				dom: 'Bfrtip',
+				buttons: ['colvis', 'pageLength', 'excel', 'pdf', 'copy'],
+				ajax: `/categories/get-all`,
+				columns: [
+					{ data: 'name', name: 'name', orderable: true, searchable: true },
+					{
+						name: 'action',
+						orderable: false,
+						searchable: false,
+						render: (data, type, row, meta) => {
+							return `<div class="d-flex justify-content-center" data-role='actions'>
+		            <button onclick='event.preventDefault();' data-id='${row.id}' role='edit' class="btn btn-warning btn-sm">
+		              <i class='fas fa-pencil-alt' data-id='${row.id}' role='edit'></i>
+								</button>
+		            <button onclick='event.preventDefault();' data-id='${row.id}' role='delete' class="btn btn-danger btn-sm ms-1">
+		            	<i class='fas fa-trash-alt' data-id='${row.id}' role='delete'></i>
+								</button>
+		          </div>`
+						}
+					}
+				]
+			})
 		}
 
-		const getCategories = async () => {
-			try {
-				const { data } = await axios.get('/categories/get-all')
-				categories.value = data.categories
-			} catch (error) {
-				await handlerErrors(error)
+		const handleAction = (event) => {
+			const button = event.target
+			const category_id = button.getAttribute('data-id')
+			if (button.getAttribute('role') == 'edit') {
+				editCategory(category_id)
+			} else if (button.getAttribute('role') == 'delete') {
+				deleteCategory(category_id)
 			}
 		}
 
-		const mountedTable = () => {
-			table.value = $('#category_table').DataTable()
-		}
-
-		const editCategory = async ({ id }) => {
+		const editCategory = async (id) => {
 			try {
 				const { data } = await axios.get(`/categories/${id}`)
 				category.value = data.category
@@ -86,7 +99,7 @@ export default {
 			await openModal('category_modal')
 		}
 
-		const deleteCategory = async ({ id }) => {
+		const deleteCategory = async (id) => {
 			if (!await deleteMessage()) return
 			try {
 				await axios.delete(`/categories/${id}`)
@@ -111,7 +124,8 @@ export default {
 			deleteCategory,
 			createCategory,
 			closeModal,
-			reloadState
+			reloadState,
+			handleAction
 		}
 	}
 }

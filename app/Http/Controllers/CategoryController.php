@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Category\CategoryRequest;
 
 
@@ -15,8 +16,8 @@ class CategoryController extends Controller
 
 	public function getAll()
 	{
-		$categories = Category::get();
-		return response()->json(['categories' => $categories], 200);
+		$categories = Category::query();
+		return DataTables::of($categories)->toJson();
 	}
 
 	public function store(CategoryRequest $request)
